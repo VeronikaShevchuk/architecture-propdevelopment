@@ -1,0 +1,122 @@
+# ClusterRoleBinding для администраторов кластера
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin-propdev
+subjects:
+- kind: User
+  name: alice-devops
+  apiGroup: rbac.authorization.k8s.io
+---
+# ClusterRoleBinding для аудиторов безопасности
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: security-auditor-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: security-auditor
+subjects:
+- kind: User
+  name: bob-security
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding для разработчиков в dev-sales
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: dev-sales
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: developer
+subjects:
+- kind: User
+  name: charlie-dev
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding для просмотра в dev-sales
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-binding
+  namespace: dev-sales
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: viewer
+subjects:
+- kind: User
+  name: david-viewer
+  apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: managers
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding для администратора namespace dev-sales
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-admin-binding
+  namespace: dev-sales
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-admin
+subjects:
+- kind: User
+  name: alice-devops
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding для операторов Умного дома
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: smart-home-operator-binding
+  namespace: smart-home
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: smart-home-operator
+subjects:
+- kind: User
+  name: frank-smarthome
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding для администраторов сервисов ЖКУ
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-admin-binding
+  namespace: tenant-services
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tenant-admin
+subjects:
+- kind: User
+  name: eve-tenant
+  apiGroup: rbac.authorization.k8s.io
+---
+# ClusterRoleBinding для CI/CD систем
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ci-cd-bot-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ci-cd-bot
+subjects:
+- kind: ServiceAccount
+  name: jenkins
+  namespace: jenkins
+- kind: ServiceAccount
+  name: gitlab-runner
+  namespace: gitlab

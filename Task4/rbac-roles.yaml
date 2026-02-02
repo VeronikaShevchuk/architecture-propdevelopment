@@ -1,0 +1,119 @@
+# ClusterRole для администраторов кластера
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-admin-propdev
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+- nonResourceURLs: ["*"]
+  verbs: ["*"]
+---
+# ClusterRole для аудиторов безопасности
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: security-auditor
+rules:
+- apiGroups: ["", "apps", "batch", "extensions"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events", "namespaces"]
+  verbs: ["get", "list", "watch"]
+---
+# Role для разработчиков (в namespace)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: dev-sales
+rules:
+- apiGroups: ["", "apps", "batch"]
+  resources: ["pods", "pods/log", "deployments", "statefulsets", "jobs", "cronjobs", "services", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+---
+# Role только для чтения
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: viewer
+  namespace: dev-sales
+rules:
+- apiGroups: ["", "apps", "batch"]
+  resources: ["pods", "deployments", "services", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+---
+# Role для администраторов namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: dev-sales
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+# Role для операторов Умного дома
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: smart-home-operator
+  namespace: smart-home
+rules:
+- apiGroups: ["", "apps"]
+  resources: ["pods", "deployments", "services", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  verbs: ["update"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+---
+# Role для администраторов сервисов ЖКУ
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-admin
+  namespace: tenant-services
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch", "create", "update"]
+---
+# ClusterRole для CI/CD систем
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ci-cd-bot
+rules:
+- apiGroups: ["", "apps"]
+  resources: ["deployments", "statefulsets", "pods", "services"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
