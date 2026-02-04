@@ -1,0 +1,110 @@
+@startuml PropDevelopment_Smart_Home_Deployment_Context
+!include <C4/C4_Container>
+
+title Контекст развертывания сервисов "Умный дом"
+
+' ==== КЛЮЧЕВЫЕ КОМПОНЕНТЫ ====
+
+' 1. ИНФРАСТРУКТУРА PROPDEVELOPMENT
+System_Boundary(propdev_infra, "Инфраструктура PropDevelopment") {
+    Container(smart_home_service, "Smart Home Service", "Spring Boot", "Оркестрация сервисов Умного дома")
+    Container(iam_service, "IAM Service", "Keycloak", "Аутентификация и авторизация")
+    Container(api_gateway, "API Gateway", "Kong/NGINX", "Единая точка входа для API")
+    
+    ContainerDb(smart_home_db, "Smart Home DB", "PostgreSQL", "Хранение данных доступа и устройств")
+    ContainerDb(user_db, "User Database", "PostgreSQL", "Данные пользователей")
+}
+
+' 2. ИНФРАСТРУКТУРА ПАРТНЕРА
+System_Boundary(partner_infra, "Инфраструктура партнера") {
+    Container(partner_platform, "Платформа партнера", "Smart Home Platform", "Управление устройствами Умного дома")
+    Container(biometric_service, "Biometric Service", "ML API", "Распознавание лиц")
+    Container(anpr_service, "ANPR Service", "ML API", "Распознавание номеров авто")
+}
+
+' 3. КЛИЕНТСКИЕ УСТРОЙСТВА
+Person(owner, "Собственник", "Владелец квартиры")
+Person(resident, "Жилец", "Член семьи собственника")
+Person(guest, "Гость", "Временный посетитель")
+
+' 4. ФИЗИЧЕСКИЕ УСТРОЙСТВА
+System_Ext(smart_doorphone, "Умный домофон", "Устройство с камерой и биометрией")
+System_Ext(smart_barrier, "Умный шлагбаум", "Устройство с камерой ANPR")
+
+' 5. МОБИЛЬНОЕ ПРИЛОЖЕНИЕ
+Container(mobile_app, "Мобильное приложение", "iOS/Android", "Приложение для управления доступом")
+
+' ==== КОММУНИКАЦИИ ====
+
+' 1. ПОЛЬЗОВАТЕЛИ -> ПРИЛОЖЕНИЕ
+Rel(owner, mobile_app, "Управляет доступом", "HTTPS/TLS 1.3")
+Rel(resident, mobile_app, "Использует сервисы", "HTTPS/TLS 1.3")
+Rel(guest, mobile_app, "Получает временный доступ", "HTTPS/TLS 1.3")
+
+' 2. ПРИЛОЖЕНИЕ -> API GATEWAY
+Rel(mobile_app, api_gateway, "API запросы", "REST/HTTPS\nJWT токены")
+
+' 3. API GATEWAY -> ВНУТРЕННИЕ СЕРВИСЫ
+Rel(api_gateway, iam_service, "Валидация токенов", "REST/HTTPS")
+Rel(api_gateway, smart_home_service, "Обработка запросов", "REST/HTTPS")
+
+' 4. SMART HOME SERVICE -> БАЗЫ ДАННЫХ
+Rel(smart_home_service, smart_home_db, "Чтение/запись данных", "JDBC/TLS")
+Rel(smart_home_service, user_db, "Получение данных пользователей", "JDBC/TLS")
+
+' 5. ИНТЕГРАЦИЯ С ПАРТНЕРОМ
+Rel(smart_home_service, partner_platform, "Управление устройствами", "REST/HTTPS\nmTLS + JWT")
+
+' 6. ПАРТНЕР -> ML СЕРВИСЫ
+Rel(partner_platform, biometric_service, "Распознавание лиц", "gRPC/TLS")
+Rel(partner_platform, anpr_service, "Распознавание номеров", "gRPC/TLS")
+
+' 7. ПАРТНЕР -> ФИЗИЧЕСКИЕ УСТРОЙСТВА
+Rel(partner_platform, smart_doorphone, "Управление доступом", "MQTT/TLS\nLoRaWAN")
+Rel(partner_platform, smart_barrier, "Управление шлагбаумом", "MQTT/TLS\nLoRaWAN")
+
+' 8. ОБРАТНАЯ СВЯЗЬ ОТ УСТРОЙСТВ
+Rel(smart_doorphone, partner_platform, "События доступа", "MQTT/TLS")
+Rel(smart_barrier, partner_platform, "События проезда", "MQTT/TLS")
+
+' ==== ТРЕБОВАНИЯ К ИНФРАСТРУКТУРЕ ====
+
+note top of propdev_infra
+    <b>Инфраструктура PropDevelopment:</b>
+    • Приватное облако (собственный ЦОД)
+    • Публичное облако (AWS/Azure)
+    • Гибридное развертывание
+    • Геораспределенность
+endnote
+
+note right of partner_infra
+    <b>Инфраструктура партнера:</b>
+    • Облачная платформа
+    • SLA 99.95%
+    • DDoS защита
+    • ISO 27001 сертификация
+    • Соответствие 152-ФЗ
+endnote
+
+' ==== БЕЗОПАСНОСТЬ ====
+
+note bottom of api_gateway
+    <b>Меры безопасности:</b>
+    1. WAF (Web Application Firewall)
+    2. Rate Limiting
+    3. DDoS Protection
+    4. API Security Gateway
+    5. Mutual TLS
+endnote
+
+' ==== МОНИТОРИНГ И ЛОГИРОВАНИЕ ====
+System_Ext(monitoring_system, "Система мониторинга", "SIEM + ELK Stack")
+
+Rel(api_gateway, monitoring_system, "Логи доступа", "Syslog/TLS")
+Rel(smart_home_service, monitoring_system, "Логи операций", "Syslog/TLS")
+Rel(iam_service, monitoring_system, "События аутентификации", "Syslog/TLS")
+Rel(partner_platform, monitoring_system, "Логи устройств", "Syslog/TLS")
+
+
+
+@enduml

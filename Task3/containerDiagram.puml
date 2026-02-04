@@ -1,0 +1,168 @@
+@startuml PropDevelopment_Smart_Home_Architecture
+!include <C4/C4_Container>
+
+title PropDevelopment - Архитектура с сервисами "Умный дом"\nC4 Level 2: Диаграмма контейнеров
+
+' ==== ЛЕГЕНДА ====
+legend right
+    | Цвет | Описание |
+    | <#E3F2FD,#1976D2> | Существующие системы |
+    | <#FFF3E0,#F57C00> | Новые компоненты |
+    | <#FFEBEE,#D32F2F> | Внешние системы |
+endlegend
+
+' ==== ПОЛЬЗОВАТЕЛИ ====
+Person(owner, "Собственник", "Владелец квартиры, управляет доступом")
+Person(resident, "Жилец", "Член семьи, имеет ограниченные права")
+Person(guest, "Гость", "Временный посетитель, минимальные права")
+
+' ==== СУЩЕСТВУЮЩИЕ СИСТЕМЫ PROPDEVELOPMENT ====
+
+System_Boundary(propdev_boundary, "PropDevelopment") {
+
+    ' --- Группа сервисов для клиентов ---
+    Container(sales_showcase, "Витрина продаж", "SPA: React", "Подбор и бронирование недвижимости")
+    Container(online_tour, "client-tour-app", "Container: Spring Boot", "Онлайн-тур по объектам")
+    Container(online_deal, "client-mart-app", "Container: Spring Boot", "Проведение онлайн-сделок")
+    Container(client_crm, "client-crm-app", "Container: Dynamics CRM", "Управление клиентскими данными")
+    
+    ' --- Группа сервисов ЖКУ ---
+    Container(mobile_app, "Мобильное приложение", "Mobile: iOS/Android", "Управление сервисами для собственников")
+    Container(tenant_core, "tenant-core-app", "Container: Spring Boot", "Основной сервис услуг ЖКУ")
+    Container(tenant_crm, "CRM собственников", "Container: Spring Boot", "Управление данными собственников")
+    
+    ' --- НОВЫЕ КОМПОНЕНТЫ ДЛЯ УМНОГО ДОМА ---
+    Container(api_gateway, "API Gateway", "Kong/NGINX", "Единая точка входа для внешних интеграций") {
+        ' Метки для API Gateway
+        note right of api_gateway
+            <b>Функции:</b>
+            - Аутентификация запросов
+            - Rate limiting
+            - Логирование
+            - Трансформация запросов
+            - Кэширование
+        endnote
+    }
+    
+    Container(iam_service, "IAM Service", "Keycloak/OAuth2", "Централизованное управление доступом") {
+        note left of iam_service
+            <b>Стандарты:</b>
+            - OAuth 2.0 / OpenID Connect
+            - JWT токены
+            - Ролевая модель доступа
+            - Многофакторная аутентификация
+        endnote
+    }
+    
+    Container(smart_home_service, "Smart Home Integration", "Container: Spring Boot", "Оркестрация сервисов Умного дома") {
+        note right of smart_home_service
+            <b>Интеграции:</b>
+            1. Интеллектуальный домофон
+            2. Интеллектуальный шлагбаум
+            3. Управление доступом
+            4. Мониторинг событий
+        endnote
+    }
+    
+    Container(access_control, "Access Control Service", "Container: Spring Boot", "Управление правами доступа к устройствам")
+    
+    ContainerDb(smart_home_db, "Smart Home DB", "PostgreSQL", "Хранение данных Умного дома") {
+        note left of smart_home_db
+            <b>Данные:</b>
+            - Права доступа пользователей
+            - Логи событий
+            - Конфигурации устройств
+            - Биометрические шаблоны (хеши)
+        endnote
+    }
+}
+
+' ==== ВНЕШНИЕ СИСТЕМЫ ====
+System_Ext(partner_platform, "Платформа Умного дома", "Внешняя система партнера") {
+    note right of partner_platform
+        <b>Сервисы:</b>
+        - Интеллектуальный домофон
+        - Интеллектуальный шлагбаум
+        - Биометрическое распознавание
+        - Распознавание номеров
+    endnote
+}
+
+System_Ext(biometric_system, "Биометрическая система", "Face Recognition API", "Распознавание лиц")
+System_Ext(anpr_system, "ANPR System", "License Plate Recognition API", "Распознавание номеров авто")
+System_Ext(payment_system, "Платежная система", "Онлайн-платежи")
+System_Ext(hcs_provider, "Поставщик ресурсов ЖКХ", "Коммунальные услуги")
+
+' ==== ОСНОВНЫЕ СОЕДИНЕНИЯ ====
+
+' Пользователи -> Мобильное приложение
+Rel(owner, mobile_app, "Использует", "HTTPS/TLS 1.3")
+Rel(resident, mobile_app, "Использует с ограничениями", "HTTPS/TLS 1.3")
+Rel(guest, mobile_app, "Временный доступ", "HTTPS/TLS 1.3")
+
+' Мобильное приложение -> API Gateway
+Rel(mobile_app, api_gateway, "API вызовы", "REST/HTTPS\nJWT токены")
+
+' API Gateway -> IAM Service
+Rel(api_gateway, iam_service, "Валидация токенов", "REST/HTTPS\nOAuth 2.0")
+
+' API Gateway -> Smart Home Service
+Rel(api_gateway, smart_home_service, "Маршрутизация запросов", "REST/HTTPS")
+
+' IAM Service -> Smart Home Service
+Rel(iam_service, smart_home_service, "Авторизация", "REST/HTTPS")
+
+' Smart Home Service -> Access Control
+Rel(smart_home_service, access_control, "Проверка прав", "REST/HTTPS")
+
+' Smart Home Service -> Smart Home DB
+Rel(smart_home_service, smart_home_db, "Чтение/запись", "JDBC/TLS")
+
+' Access Control -> IAM Service
+Rel(access_control, iam_service, "Запрос информации о пользователе", "REST/HTTPS")
+
+' Smart Home Service -> Платформа партнера
+Rel(smart_home_service, partner_platform, "Управление устройствами", "REST/HTTPS\nAPI Key + JWT")
+
+' Платформа партнера -> Биометрическая система
+Rel(partner_platform, biometric_system, "Распознавание лиц", "gRPC/TLS")
+
+' Платформа партнера -> ANPR System
+Rel(partner_platform, anpr_system, "Распознавание номеров", "gRPC/TLS")
+
+' Smart Home Service -> Tenant Core App
+Rel(smart_home_service, tenant_core, "Синхронизация данных", "REST/HTTPS")
+
+' Tenant Core App -> CRM собственников
+Rel(tenant_core, tenant_crm, "Обновление данных", "REST/HTTPS")
+
+' Tenant Core App -> Платежная система
+Rel(tenant_core, payment_system, "Оплата услуг", "REST/HTTPS\nPCI DSS")
+
+' Tenant Core App -> Поставщик ресурсов
+Rel(tenant_core, hcs_provider, "Получение данных", "REST/HTTPS")
+
+' ==== ДОПОЛНИТЕЛЬНЫЕ СОЕДИНЕНИЯ ====
+Rel(iam_service, smart_home_db, "Хранение учетных данных", "JDBC/TLS")
+Rel(access_control, smart_home_db, "Хранение правил доступа", "JDBC/TLS")
+Rel(smart_home_service, iam_service, "Запрос информации о доступах", "REST/HTTPS")
+
+' ==== ОПИСАНИЕ БЕЗОПАСНОСТИ ====
+note bottom of partner_platform
+    <b>Требования безопасности:</b>
+    1. Шифрование TLS 1.3+
+    2. Mutual TLS аутентификация
+    3. API Gateway как единая точка входа
+    4. Детальное логирование всех запросов
+    5. Rate limiting и DDoS защита
+endnote
+
+note right of api_gateway
+    <b>Функции безопасности:</b>
+    - WAF (Web Application Firewall)
+    - Защита от инъекций
+    - Валидация входных данных
+    - Мониторинг аномальной активности
+endnote
+
+@enduml
