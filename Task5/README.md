@@ -54,3 +54,62 @@ kubectl get networkpolicies -n network-policies-demo
 kubectl describe networkpolicies -n network-policies-demo
 
 ```
+
+# Тестирование
+
+**front-end → back-end-api (должен пройти)
+
+```
+kubectl run test-front-back --rm -i -t \
+  --image=alpine \
+  --labels="role=front-end" \
+  -n network-policies-demo \
+  -- sh
+
+# Внутри контейнера выполните:
+wget -qO- --timeout=2 http://back-end-api-svc
+exit
+
+```
+
+**admin-front-end → admin-back-end-api (должен пройти)
+
+```
+kubectl run test-admin-admin --rm -i -t \
+  --image=alpine \
+  --labels="role=admin-front-end" \
+  -n network-policies-demo \
+  -- sh
+
+wget -qO- --timeout=2 http://admin-back-end-api-svc
+exit
+
+```
+
+**front-end → admin-back-end-api (не должен пройти)
+
+```
+kubectl run test-front-admin --rm -i -t \
+  --image=alpine \
+  --labels="role=front-end" \
+  -n network-policies-demo \
+  -- sh
+
+wget -qO- --timeout=2 http://admin-back-end-api-svc
+exit
+
+```
+
+**admin-front-end → back-end-api (не должен пройти)
+
+```
+kubectl run test-admin-back --rm -i -t \
+  --image=alpine \
+  --labels="role=admin-front-end" \
+  -n network-policies-demo \
+  -- sh
+
+wget -qO- --timeout=2 http://back-end-api-svc
+exit
+
+```
