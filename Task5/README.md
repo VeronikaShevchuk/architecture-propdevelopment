@@ -57,7 +57,7 @@ kubectl describe networkpolicies -n network-policies-demo
 
 # Тестирование
 
-**front-end → back-end-api (должен пройти)
+**front-end → back-end-api (должен пройти)**
 
 ```
 kubectl run test-front-back --rm -i -t \
@@ -66,13 +66,13 @@ kubectl run test-front-back --rm -i -t \
   -n network-policies-demo \
   -- sh
 
-# Внутри контейнера выполните:
+# Внутри контейнера:
 wget -qO- --timeout=2 http://back-end-api-svc
 exit
 
 ```
 
-**admin-front-end → admin-back-end-api (должен пройти)
+**admin-front-end → admin-back-end-api (должен пройти)**
 
 ```
 kubectl run test-admin-admin --rm -i -t \
@@ -86,7 +86,7 @@ exit
 
 ```
 
-**front-end → admin-back-end-api (не должен пройти)
+**front-end → admin-back-end-api (не должен пройти)**
 
 ```
 kubectl run test-front-admin --rm -i -t \
@@ -100,7 +100,7 @@ exit
 
 ```
 
-**admin-front-end → back-end-api (не должен пройти)
+**admin-front-end → back-end-api (не должен пройти)**
 
 ```
 kubectl run test-admin-back --rm -i -t \
